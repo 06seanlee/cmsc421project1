@@ -4,6 +4,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 import random
+import math
+import time
 from search import astar_search, Problem
 from scipy.sparse.csgraph import minimum_spanning_tree
 
@@ -81,6 +83,8 @@ def nearest_neighbor(matrix, start_city=0):
     total_dist += matrix[curr][start_city]
     tour.append(start_city)
 
+    
+
     return tour, total_dist
 
 def nearest_neighbor_2opt(tour, matrix, start_city=0):
@@ -116,6 +120,8 @@ def rrnn_2opt(matrix, start_city=0, k=3, num_repeats=5):
     best_tour = None
     best_dist = float('inf')
 
+    k = min(k, len(matrix) - 1)
+
     for i in range(num_repeats):
         unseen = set(range(len(matrix)))
         curr = start_city
@@ -149,25 +155,169 @@ def rrnn_2opt(matrix, start_city=0, k=3, num_repeats=5):
     
     return best_tour, best_dist    
 
+# helper function to find the distance of a tour
+def find_dist(matrix, tour):
+    dist = 0
+    for i in range(len(tour) - 1):
+        dist += matrix[tour[i]][tour[i + 1]]
 
+    return dist
+
+def hill_climbing(matrix, num_restarts):
+    best_dist = float('inf')
+    best_tour = None
+
+    for i in range(num_restarts): 
+        cities = list(range(len(matrix)))
+        random.shuffle(cities) # randomize starting tour
+        tour = cities + [cities[0]] # adding the start node to the end
+
+        curr_dist = find_dist(matrix, tour)
+        
+        improved = True
+        while improved:
+            improved = False
+            # get 2 random city indices
+            possible_city_swaps = list(range(len(matrix) - 1))
+            first_city_index = random.choice(possible_city_swaps)
+            possible_city_swaps.remove(first_city_index)
+            second_city_index = random.choice(possible_city_swaps)
+
+            # swap the two random cities
+            tour[first_city_index], tour[second_city_index] = tour[second_city_index], tour[first_city_index]
+
+            new_dist = find_dist(matrix, tour)
+
+            if new_dist < curr_dist:
+                curr_dist = new_dist
+                improved = True
+            else:
+                tour[first_city_index], tour[second_city_index] = tour[second_city_index], tour[first_city_index]
+    
+        if curr_dist < best_dist:
+            best_tour = tuple(tour)
+            best_dist = curr_dist
+    
+    return list(best_tour), best_dist
+    
+def simulated_annealing(matrix, alpha, initial_temperature, max_iterations):
+    best_dist = float('inf')
+    best_tour = None
+    curr_temperature = initial_temperature
+    cities = list(range(len(matrix)))
+    random.shuffle(cities) # randomize starting tour
+    tour = cities + [cities[0]] # adding the start node to the end
+
+    curr_dist = find_dist(matrix, tour)
+
+    for i in range(max_iterations): 
+        if curr_temperature <= 0:
+            break
+
+        # get 2 random city indices
+        possible_city_swaps = list(range(len(matrix) - 1))
+        first_city_index = random.choice(possible_city_swaps)
+        possible_city_swaps.remove(first_city_index)
+        second_city_index = random.choice(possible_city_swaps)
+
+        # swap the two random cities
+        tour[first_city_index], tour[second_city_index] = tour[second_city_index], tour[first_city_index]
+
+        new_dist = find_dist(matrix, tour)
+
+        accept_worse = math.exp((curr_dist - new_dist) / curr_temperature)
+
+        if new_dist < curr_dist or random.random() < accept_worse:
+            curr_dist = new_dist
+            curr_temperature = curr_temperature * alpha
+        else:
+            tour[first_city_index], tour[second_city_index] = tour[second_city_index], tour[first_city_index]
+
+        if curr_dist < best_dist:
+            best_tour = tuple(tour)
+            best_dist = curr_dist
+    
+    return list(best_tour), best_dist
+    
+# offspring function for genetic
+def create_offspring(parent1, parent2):
+    p1 = parent1[:-1]
+    p2 = parent2[:-1]
+    n = len(p1)
+
+    start = random.randint(0, n - 1)
+    end = random.randint(start + 1, n)
+    segment = p1[start:end]
+
+    remaining = []
+    for city in p2:
+        if city not in segment:
+            remaining.append(city)
+
+    child = remaining[:start] + segment + remaining[start:]
+    return child + [child[0]]
+
+def genetic(matrix, mutation_chance, population_size, num_generations):
+    population = []
+    cities = list(range(len(matrix)))
+    # create random starting parents
+    for i in range(population_size):
+        random_cities = cities.copy()
+        random.shuffle(random_cities)
+        random_cities += [random_cities[0]] # add start to end as well
+        population.append(random_cities)
+    
+    for i in range(num_generations):
+        # pair up parents
+        for i in range(population_size):
+            parent1 = random.choice(population)
+            parent2 = random.choice(population)
+            while parent2 == parent1:
+                parent2 = random.choice(population)
+
+            child = create_offspring(parent1, parent2)
+
+            if random.random() < mutation_chance: # mutation occurs
+                possible_city_swaps = list(range(1, len(matrix) - 1))
+                first_city_index = random.choice(possible_city_swaps)
+                possible_city_swaps.remove(first_city_index)
+                second_city_index = random.choice(possible_city_swaps)
+
+                child[first_city_index], child[second_city_index] = child[second_city_index], child[first_city_index]
+            
+            population.append(child)
+        
+        # sort in place
+        population.sort(key=lambda tour: find_dist(matrix, tour))
+        
+        population = population[:population_size] # keep only the elites
+    
+    # find best of the best
+    best_tour = population[0]
+    best_dist = find_dist(matrix, best_tour)
+    return best_tour, best_dist
+
+def astar(matrix):
+    problem = TSPProblem(matrix)
+    solution = astar_search(problem)
+
+    return solution.solution(), solution.path_cost
 
 def main():
-    mat = np.loadtxt('matrices/15_random_adj_mat_0.txt')
+    mat = np.loadtxt(sys.argv[1])
 
-    print(mat)
+    start_time = time.time()
+    start_cpu = time.process_time()
 
-    # for start in range(len(mat)):
-    #     tour, dist = nearest_neighbor(mat, start)
-    #     print(f"{tour}, Regular Distance: {dist}")
-    #     tour, dist = nearest_neighbor_2opt(tour, mat, start)
-    #     print(f"{tour}, 2-Opt Distance: {dist}")
-    #     tour, dist = rrnn_2opt(mat, start)
-    #     print(f"{tour}, RRNN2-Opt Distance: {dist}")
-    problem = TSPProblem(mat)
-    solution = astar_search(problem)
-    if solution:
-        print(f"A* tour: {solution.solution()}, Distance: {solution.path_cost}")
+    tour, dist = hill_climbing(mat, 10)
 
+    end_time = time.time()
+    end_cpu = time.process_time()
+
+    print(f"Tour: {tour}")
+    print(f"Cost: {dist}")
+    print(f"Runtime: {end_time - start_time:.4f} seconds")
+    print(f"CPU Time: {end_cpu - start_cpu:.4f} seconds")
 
 if __name__ == '__main__':
     main()
