@@ -23,45 +23,59 @@ import matplotlib.pyplot as plt
 # plt.savefig('num_repeats_plot.png')
 # plt.show()
 
-df = pd.read_csv('algorithm_results.csv')
-algorithms = df['algorithm'].unique()
-colors = {'nearest_neighbor': 'blue', 'nearest_neighbor_2opt': 'orange', 'rrnn_2opt': 'green'}
+# --- NN, NN2OPT, RRNN2OPT PLOTS --- 
 
-# plot 1: runtime
-plt.figure()
-for alg in algorithms:
-    data = df[df['algorithm'] == alg]
-    plt.plot(data['n_cities'], data['median_runtime'], marker='o', label=alg, color=colors[alg])
-plt.xlabel('Number of Cities')
-plt.ylabel('Median Runtime (ns)')
-plt.title('Runtime vs Number of Cities')
-plt.xticks([5, 10, 15, 20, 25, 30])
-plt.legend()
-plt.savefig('runtime_plot.png')
-plt.show()
+# df = pd.read_csv('algorithm_results.csv')
+# algorithms = df['algorithm'].unique()
+# colors = {'nearest_neighbor': 'blue', 'nearest_neighbor_2opt': 'orange', 'rrnn_2opt': 'green'}
 
-# plot 2: cpu time
-plt.figure()
-for alg in algorithms:
-    data = df[df['algorithm'] == alg]
-    plt.plot(data['n_cities'], data['median_cpu_time'], marker='o', label=alg, color=colors[alg])
-plt.xlabel('Number of Cities')
-plt.ylabel('Median CPU Time (ns)')
-plt.title('CPU Time vs Number of Cities')
-plt.xticks([5, 10, 15, 20, 25, 30])
-plt.legend()
-plt.savefig('cpu_time_plot.png')
-plt.show()
+# # plot 1: runtime
+# plt.figure()
+# for alg in algorithms:
+#     data = df[df['algorithm'] == alg]
+#     plt.plot(data['n_cities'], data['median_runtime'], marker='o', label=alg, color=colors[alg])
+# plt.xlabel('Number of Cities')
+# plt.ylabel('Median Runtime (ns)')
+# plt.title('Runtime vs Number of Cities')
+# plt.xticks([5, 10, 15, 20, 25, 30])
+# plt.legend()
+# plt.savefig('runtime_plot.png')
+# plt.show()
 
-# plot 3: cost
+# # plot 2: cpu time
+# plt.figure()
+# for alg in algorithms:
+#     data = df[df['algorithm'] == alg]
+#     plt.plot(data['n_cities'], data['median_cpu_time'], marker='o', label=alg, color=colors[alg])
+# plt.xlabel('Number of Cities')
+# plt.ylabel('Median CPU Time (ns)')
+# plt.title('CPU Time vs Number of Cities')
+# plt.xticks([5, 10, 15, 20, 25, 30])
+# plt.legend()
+# plt.savefig('cpu_time_plot.png')
+# plt.show()
+
+# # plot 3: cost
+# plt.figure()
+# for alg in algorithms:
+#     data = df[df['algorithm'] == alg]
+#     plt.plot(data['n_cities'], data['median_cost'], marker='o', label=alg, color=colors[alg])
+# plt.xlabel('Number of Cities')
+# plt.ylabel('Median Cost')
+# plt.title('Cost vs Number of Cities')
+# plt.xticks([5, 10, 15, 20, 25, 30])
+# plt.legend()
+# plt.savefig('cost_plot.png')
+# plt.show()
+
+# --- HILL CLIMBING PLOTS --- 
+
+df = pd.read_csv('hill_climbing.csv')
+
 plt.figure()
-for alg in algorithms:
-    data = df[df['algorithm'] == alg]
-    plt.plot(data['n_cities'], data['median_cost'], marker='o', label=alg, color=colors[alg])
-plt.xlabel('Number of Cities')
+plt.plot(df['value'], df['median_cost'], marker='o')
+plt.xlabel('Number of Restarts')
 plt.ylabel('Median Cost')
-plt.title('Cost vs Number of Cities')
-plt.xticks([5, 10, 15, 20, 25, 30])
-plt.legend()
-plt.savefig('cost_plot.png')
+plt.title('Hill Climbing: Number of Restarts vs Median Cost')
+plt.savefig('hill_climbing.png')
 plt.show()

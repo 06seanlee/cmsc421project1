@@ -3,6 +3,7 @@ import time
 import numpy as np
 import project1
 
+# --- FINDING OPTIMAL K AND NUM_REPEATS FOR RRNN2 ---
 # sizes = [5, 10, 15, 20, 25, 30]
 # matrices = []
 # for size in sizes:
@@ -41,56 +42,83 @@ import project1
 #     writer.writeheader()
 #     writer.writerows(results)
 
+# --- NN, NN2OPT, RRNN2OPT EXPERIMENTS ---
+
+# sizes = [5, 10, 15, 20, 25, 30]
+# matrices = []
+# for size in sizes:
+#     for i in range(10):
+#         matrices.append(f'matrices/{size}_random_adj_mat_{i}.txt')
+
+
+# algorithms = [
+#     ('nearest_neighbor', lambda m: project1.nearest_neighbor(m), 100),
+#     ('nearest_neighbor_2opt', lambda m: project1.nearest_neighbor_2opt(project1.nearest_neighbor(m)[0], m), 100),
+#     ('rrnn_2opt', lambda m: project1.rrnn_2opt(m, k=3, num_repeats=5), 1)
+# ]
+
+# results = []
+
+# for name, algorithm, num_runs in algorithms:
+#     for size in sizes:
+#         runtimes = []
+#         cpu_times = []
+#         costs = []
+
+#         # get all 10 matrices for this size
+#         size_matrices = [f for f in matrices if f.startswith(f'matrices/{size}_')]
+
+#         for matrix_file in size_matrices:
+#             mat = np.loadtxt(matrix_file)
+
+#             start_time = time.time_ns()
+#             start_cpu = time.process_time_ns()
+#             for _ in range(num_runs):
+#                 tour, dist = algorithm(mat)
+#             end_time = time.time_ns()
+#             end_cpu = time.process_time_ns()
+
+#             runtime = (end_time - start_time) / num_runs
+#             cpu_time = (end_cpu - start_cpu) / num_runs
+
+#             runtimes.append(runtime)
+#             cpu_times.append(cpu_time)
+#             costs.append(dist)
+
+#         results.append({
+#             'algorithm': name,
+#             'n_cities': size,
+#             'median_runtime': np.median(runtimes),
+#             'median_cpu_time': np.median(cpu_times),
+#             'median_cost': np.median(costs)
+#         })
+
+# with open('algorithm_results.csv', 'w', newline='') as f:
+#     writer = csv.DictWriter(f, fieldnames=['algorithm', 'n_cities', 'median_runtime', 'median_cpu_time', 'median_cost'])
+#     writer.writeheader()
+#     writer.writerows(results)
+
+# --- HILL CLIMBING, SIMULATED ANNEALING, GENETIC EXPERIMENT --- 
+
 sizes = [5, 10, 15, 20, 25, 30]
 matrices = []
 for size in sizes:
     for i in range(10):
         matrices.append(f'matrices/{size}_random_adj_mat_{i}.txt')
 
-
-algorithms = [
-    ('nearest_neighbor', lambda m: project1.nearest_neighbor(m), 100),
-    ('nearest_neighbor_2opt', lambda m: project1.nearest_neighbor_2opt(project1.nearest_neighbor(m)[0], m), 100),
-    ('rrnn_2opt', lambda m: project1.rrnn_2opt(m, k=3, num_repeats=5), 1)
-]
-
 results = []
 
-for name, algorithm, num_runs in algorithms:
-    for size in sizes:
-        runtimes = []
-        cpu_times = []
-        costs = []
+num_restarts_values = [1, 5, 10, 15, 20, 25]
 
-        # get all 10 matrices for this size
-        size_matrices = [f for f in matrices if f.startswith(f'matrices/{size}_')]
+for num_restarts in num_restarts_values:
+    costs = []
+    for matrix_file in matrices:
+        mat = np.loadtxt(matrix_file)
+        tour, dist = project1.hill_climbing(mat, num_restarts)
+        costs.append(dist)
+    results.append({'value': num_restarts, 'median_cost': np.median(costs)})
 
-        for matrix_file in size_matrices:
-            mat = np.loadtxt(matrix_file)
-
-            start_time = time.time_ns()
-            start_cpu = time.process_time_ns()
-            for _ in range(num_runs):
-                tour, dist = algorithm(mat)
-            end_time = time.time_ns()
-            end_cpu = time.process_time_ns()
-
-            runtime = (end_time - start_time) / num_runs
-            cpu_time = (end_cpu - start_cpu) / num_runs
-
-            runtimes.append(runtime)
-            cpu_times.append(cpu_time)
-            costs.append(dist)
-
-        results.append({
-            'algorithm': name,
-            'n_cities': size,
-            'median_runtime': np.median(runtimes),
-            'median_cpu_time': np.median(cpu_times),
-            'median_cost': np.median(costs)
-        })
-
-with open('algorithm_results.csv', 'w', newline='') as f:
-    writer = csv.DictWriter(f, fieldnames=['algorithm', 'n_cities', 'median_runtime', 'median_cpu_time', 'median_cost'])
+with open('hill_climbing.csv', 'w', newline='') as f:
+    writer = csv.DictWriter(f, fieldnames=['value', 'median_cost'])
     writer.writeheader()
     writer.writerows(results)
