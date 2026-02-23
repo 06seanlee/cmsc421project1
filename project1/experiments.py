@@ -98,27 +98,124 @@ import project1
 #     writer.writeheader()
 #     writer.writerows(results)
 
-# --- HILL CLIMBING, SIMULATED ANNEALING, GENETIC EXPERIMENT --- 
+# --- NN, NN2OPT, RRNN2OPT FOR COMPARISON TO A* ---
 
-sizes = [5, 10, 15, 20, 25, 30]
+sizes = [5,6,7,8,9,10,15]
 matrices = []
 for size in sizes:
     for i in range(10):
         matrices.append(f'matrices/{size}_random_adj_mat_{i}.txt')
 
+
+algorithms = [
+    ('nearest_neighbor', lambda m: project1.nearest_neighbor(m), 100),
+    ('nearest_neighbor_2opt', lambda m: project1.nearest_neighbor_2opt(project1.nearest_neighbor(m)[0], m), 100),
+    ('rrnn_2opt', lambda m: project1.rrnn_2opt(m, k=3, num_repeats=5), 1)
+]
+
 results = []
 
-num_restarts_values = [1, 5, 10, 15, 20, 25]
+for name, algorithm, num_runs in algorithms:
+    for size in sizes:
+        runtimes = []
+        cpu_times = []
+        costs = []
 
-for num_restarts in num_restarts_values:
-    costs = []
-    for matrix_file in matrices:
-        mat = np.loadtxt(matrix_file)
-        tour, dist = project1.hill_climbing(mat, num_restarts)
-        costs.append(dist)
-    results.append({'value': num_restarts, 'median_cost': np.median(costs)})
+        # get all 10 matrices for this size
+        size_matrices = [f for f in matrices if f.startswith(f'matrices/{size}_')]
 
-with open('hill_climbing.csv', 'w', newline='') as f:
-    writer = csv.DictWriter(f, fieldnames=['value', 'median_cost'])
+        for matrix_file in size_matrices:
+            mat = np.loadtxt(matrix_file)
+
+            start_time = time.time_ns()
+            start_cpu = time.process_time_ns()
+            for _ in range(num_runs):
+                tour, dist = algorithm(mat)
+            end_time = time.time_ns()
+            end_cpu = time.process_time_ns()
+
+            runtime = (end_time - start_time) / num_runs
+            cpu_time = (end_cpu - start_cpu) / num_runs
+
+            runtimes.append(runtime)
+            cpu_times.append(cpu_time)
+            costs.append(dist)
+
+        results.append({
+            'algorithm': name,
+            'n_cities': size,
+            'median_runtime': np.median(runtimes),
+            'median_cpu_time': np.median(cpu_times),
+            'median_cost': np.median(costs)
+        })
+
+with open('algorithm_results_compare_astar.csv', 'w', newline='') as f:
+    writer = csv.DictWriter(f, fieldnames=['algorithm', 'n_cities', 'median_runtime', 'median_cpu_time', 'median_cost'])
     writer.writeheader()
     writer.writerows(results)
+
+# --- HILL CLIMBING, SIMULATED ANNEALING, GENETIC EXPERIMENT --- 
+
+# sizes = [5, 10, 15, 20, 25, 30]
+# matrices = []
+# for size in sizes:
+#     for i in range(10):
+#         matrices.append(f'matrices/{size}_random_adj_mat_{i}.txt')
+
+# results = []
+
+# num_restarts_values = [1, 5, 10, 15, 20, 25]
+
+# for num_restarts in num_restarts_values:
+#     costs = []
+#     for matrix_file in matrices:
+#         mat = np.loadtxt(matrix_file)
+#         tour, dist = project1.hill_climbing(mat, num_restarts)
+#         costs.append(dist)
+#     results.append({'value': num_restarts, 'median_cost': np.median(costs)})
+
+# with open('hill_climbing.csv', 'w', newline='') as f:
+#     writer = csv.DictWriter(f, fieldnames=['value', 'median_cost'])
+#     writer.writeheader()
+#     writer.writerows(results)
+
+# sizes = [5,6,7,8,9,10,15]
+
+# results = []
+
+# for size in sizes:
+#     runtimes = []
+#     cpu_times = []
+#     costs = []
+#     nodes_expanded = []
+
+#     for i in range(10):
+#         matrix_file = f'matrices/{size}_random_adj_mat_{i}.txt'
+#         mat = np.loadtxt(matrix_file)
+
+#         problem = project1.TSPProblem(mat)
+
+#         start_time = time.time_ns()
+#         start_cpu = time.process_time_ns()
+#         solution = project1.astar_search(problem)
+#         end_time = time.time_ns()
+#         end_cpu = time.process_time_ns()
+
+#         if solution:
+#             runtimes.append(end_time - start_time)
+#             cpu_times.append(end_cpu - start_cpu)
+#             costs.append(solution.path_cost)
+#             nodes_expanded.append(problem.nodes_expanded)
+
+#     results.append({
+#         'n_cities': size,
+#         'median_runtime': np.median(runtimes),
+#         'median_cpu_time': np.median(cpu_times),
+#         'median_cost': np.median(costs),
+#         'median_nodes_expanded': np.median(nodes_expanded)
+#     })
+
+# with open('astar_results.csv', 'w', newline='') as f:
+#     writer = csv.DictWriter(f, fieldnames=['n_cities', 'median_runtime', 'median_cpu_time', 'median_cost', 'median_nodes_expanded'])
+#     writer.writeheader()
+#     writer.writerows(results)

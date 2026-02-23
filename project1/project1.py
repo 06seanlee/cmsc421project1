@@ -15,6 +15,7 @@ class TSPProblem(Problem):
     def __init__(self, matrix):
         self.matrix = matrix
         self.cities = list(range(len(matrix)))
+        self.nodes_expanded = 0
         super().__init__((0, (0,))) # initialized with starting city 0, and 0 visited cities (current, visited)
 
     def actions(self, state):
@@ -43,6 +44,7 @@ class TSPProblem(Problem):
         return c + self.matrix[curr_city][action]
 
     def h(self, node):
+        self.nodes_expanded += 1
         curr_city, visited = node.state
         unvisited = [c for c in range(len(self.cities)) if c not in visited]
 
