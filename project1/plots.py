@@ -175,7 +175,7 @@ import numpy as np
 
 # --- HC, SA, GA HYPERPARAMETER PLOTS --- 
 
-df = pd.read_csv('hyperparameter_results.csv')
+# df = pd.read_csv('hyperparameter_results.csv')
 
 # # plot 1: hill climbing num_restarts change
 # hill_climbing = df[df['algorithm'] == 'hill_climbing']
@@ -208,3 +208,38 @@ df = pd.read_csv('hyperparameter_results.csv')
 # plt.show()
 
 # --- COMPARE HC, SA, GA TO ASTAR --- 
+
+
+astar_df = pd.read_csv('astar_results.csv')
+alg_df = pd.read_csv('hc_sa_ga_compare_astar.csv')
+
+# only keep sizes that a* ran on
+valid_sizes = astar_df['n_cities'].tolist()
+alg_df = alg_df[alg_df['n_cities'].isin(valid_sizes)]
+
+algorithms = ['hill_climbing', 'simulated_annealing', 'genetic']
+colors = {'hill_climbing': 'blue', 'simulated_annealing': 'orange', 'genetic': 'green'}
+
+metrics = [
+    ('median_runtime', 'Runtime', 'hc_sa_ga_runtime_comparison.png'),
+    ('median_cpu_time', 'CPU Time', 'hc_sa_ga_cpu_comparison.png'),
+    ('median_cost', 'Cost', 'hc_sa_ga_cost_comparison.png'),
+]
+
+for metric, label, filename in metrics:
+    plt.figure()
+    for alg in algorithms:
+        alg_data = alg_df[alg_df['algorithm'] == alg].set_index('n_cities')
+        astar_data = astar_df.set_index('n_cities')
+
+        ratios = alg_data[metric] / astar_data[metric]
+
+        plt.plot(ratios.index, ratios.values, marker='o', label=alg, color=colors[alg])
+
+    plt.xlabel('Number of Cities')
+    plt.ylabel(f'{label} / A* {label}')
+    plt.title(f'{label} Relative to A*')
+    plt.xticks(valid_sizes)
+    plt.legend()
+    plt.savefig(filename)
+    plt.show()
