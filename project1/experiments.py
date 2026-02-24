@@ -331,9 +331,9 @@ for name, algorithm in algorithms:
         results.append({
             'algorithm': name,
             'n_cities': size,
-            'runtime': end_time - start_time,
-            'cpu_time': end_cpu - start_cpu,
-            'cost': dist
+            'median_runtime': end_time - start_time,
+            'median_cpu_time': end_cpu - start_cpu,
+            'median_cost': dist
         })
 
 with open('hc_sa_ga_compare_astar.csv', 'w', newline='') as f:
