@@ -168,6 +168,7 @@ def find_dist(matrix, tour):
 def hill_climbing(matrix, num_restarts):
     best_dist = float('inf')
     best_tour = None
+    cost_history = []
 
     for i in range(num_restarts): 
         cities = list(range(len(matrix)))
@@ -199,8 +200,10 @@ def hill_climbing(matrix, num_restarts):
         if curr_dist < best_dist:
             best_tour = tuple(tour)
             best_dist = curr_dist
+
+        cost_history.append(best_dist)
     
-    return list(best_tour), best_dist
+    return list(best_tour), best_dist, cost_history
     
 def simulated_annealing(matrix, alpha, initial_temperature, max_iterations):
     best_dist = float('inf')
@@ -209,6 +212,7 @@ def simulated_annealing(matrix, alpha, initial_temperature, max_iterations):
     cities = list(range(len(matrix)))
     random.shuffle(cities) # randomize starting tour
     tour = cities + [cities[0]] # adding the start node to the end
+    cost_history = []
 
     curr_dist = find_dist(matrix, tour)
 
@@ -238,8 +242,10 @@ def simulated_annealing(matrix, alpha, initial_temperature, max_iterations):
         if curr_dist < best_dist:
             best_tour = tuple(tour)
             best_dist = curr_dist
+        
+        cost_history.append(best_dist)
     
-    return list(best_tour), best_dist
+    return list(best_tour), best_dist, cost_history
     
 # offspring function for genetic
 def create_offspring(parent1, parent2):
@@ -262,6 +268,7 @@ def create_offspring(parent1, parent2):
 def genetic(matrix, mutation_chance, population_size, num_generations):
     population = []
     cities = list(range(len(matrix)))
+    cost_history = []
     # create random starting parents
     for i in range(population_size):
         random_cities = cities.copy()
@@ -274,8 +281,10 @@ def genetic(matrix, mutation_chance, population_size, num_generations):
         for i in range(population_size):
             parent1 = random.choice(population)
             parent2 = random.choice(population)
-            while parent2 == parent1:
+            attempts = 0
+            while parent2 == parent1 and attempts < 10:
                 parent2 = random.choice(population)
+                attempts += 1
 
             child = create_offspring(parent1, parent2)
 
@@ -293,11 +302,12 @@ def genetic(matrix, mutation_chance, population_size, num_generations):
         population.sort(key=lambda tour: find_dist(matrix, tour))
         
         population = population[:population_size] # keep only the elites
+        cost_history.append(find_dist(matrix, population[0]))
     
     # find best of the best
     best_tour = population[0]
     best_dist = find_dist(matrix, best_tour)
-    return best_tour, best_dist
+    return best_tour, best_dist, cost_history
 
 def astar(matrix):
     problem = TSPProblem(matrix)

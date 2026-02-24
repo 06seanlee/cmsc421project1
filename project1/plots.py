@@ -1,5 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import project1
+import numpy as np
 
 # df = pd.read_csv('rrnn_results.csv')
 
@@ -93,36 +95,116 @@ import matplotlib.pyplot as plt
 # plt.savefig('astar_nodes_expanded.png')
 # plt.show()
 
-astar_df = pd.read_csv('astar_results.csv')
-alg_df = pd.read_csv('algorithm_results_compare_astar.csv')
+# --- ASTAR PLOTS COMPARING TO NN, NN2OPT, RRNN2OPT --- 
 
-# only keep sizes that a* ran on
-valid_sizes = astar_df['n_cities'].tolist()
-alg_df = alg_df[alg_df['n_cities'].isin(valid_sizes)]
+# astar_df = pd.read_csv('astar_results.csv')
+# alg_df = pd.read_csv('algorithm_results_compare_astar.csv')
 
-algorithms = ['nearest_neighbor', 'nearest_neighbor_2opt', 'rrnn_2opt']
-colors = {'nearest_neighbor': 'blue', 'nearest_neighbor_2opt': 'orange', 'rrnn_2opt': 'green'}
+# # only keep sizes that a* ran on
+# valid_sizes = astar_df['n_cities'].tolist()
+# alg_df = alg_df[alg_df['n_cities'].isin(valid_sizes)]
 
-metrics = [
-    ('median_runtime', 'Runtime', 'runtime_comparison.png'),
-    ('median_cpu_time', 'CPU Time', 'cpu_comparison.png'),
-    ('median_cost', 'Cost', 'cost_comparison.png'),
-]
+# algorithms = ['nearest_neighbor', 'nearest_neighbor_2opt', 'rrnn_2opt']
+# colors = {'nearest_neighbor': 'blue', 'nearest_neighbor_2opt': 'orange', 'rrnn_2opt': 'green'}
 
-for metric, label, filename in metrics:
-    plt.figure()
-    for alg in algorithms:
-        alg_data = alg_df[alg_df['algorithm'] == alg].set_index('n_cities')
-        astar_data = astar_df.set_index('n_cities')
+# metrics = [
+#     ('median_runtime', 'Runtime', 'runtime_comparison.png'),
+#     ('median_cpu_time', 'CPU Time', 'cpu_comparison.png'),
+#     ('median_cost', 'Cost', 'cost_comparison.png'),
+# ]
 
-        ratios = alg_data[metric] / astar_data[metric]
+# for metric, label, filename in metrics:
+#     plt.figure()
+#     for alg in algorithms:
+#         alg_data = alg_df[alg_df['algorithm'] == alg].set_index('n_cities')
+#         astar_data = astar_df.set_index('n_cities')
 
-        plt.plot(ratios.index, ratios.values, marker='o', label=alg, color=colors[alg])
+#         ratios = alg_data[metric] / astar_data[metric]
 
-    plt.xlabel('Number of Cities')
-    plt.ylabel(f'{label} / A* {label}')
-    plt.title(f'{label} Relative to A*')
-    plt.xticks(valid_sizes)
-    plt.legend()
-    plt.savefig(filename)
-    plt.show()
+#         plt.plot(ratios.index, ratios.values, marker='o', label=alg, color=colors[alg])
+
+#     plt.xlabel('Number of Cities')
+#     plt.ylabel(f'{label} / A* {label}')
+#     plt.title(f'{label} Relative to A*')
+#     plt.xticks(valid_sizes)
+#     plt.legend()
+#     plt.savefig(filename)
+#     plt.show()
+
+# --- HILL CLIMBING COSTS OVER ITERATION --- 
+
+# mat = np.loadtxt('matrices/25_random_adj_mat_0.txt')
+
+# _, _, history = project1.hill_climbing(mat, num_restarts=500)
+
+# plt.figure()
+# plt.plot(range(len(history)), history)
+# plt.xlabel('Restart')
+# plt.ylabel('Best Cost Found')
+# plt.title('Hill Climbing Cost Over Restarts')
+# plt.savefig('simulated_annealing_iterations')
+# plt.show()
+
+# --- SIMULATED ANNEALING COSTS OVER ITERATION --- 
+
+# mat = np.loadtxt('matrices/25_random_adj_mat_0.txt')
+
+# _, _, history = project1.simulated_annealing(mat, 0.995, 1000, 50)
+
+# plt.figure()
+# plt.plot(range(len(history)), history)
+# plt.xlabel('Iterations')
+# plt.ylabel('Best Cost Found')
+# plt.title('Simulated Annealing Cost Over Restarts')
+# plt.savefig('simulated_annealing_iterations')
+# plt.show()
+
+# --- GENETIC ALGORITHM COSTS OVER ITERATION --- 
+
+# mat = np.loadtxt('matrices/25_random_adj_mat_0.txt')
+
+# _, _, history = project1.genetic(mat, 0.1, 50, 200)
+
+# plt.figure()
+# plt.plot(range(len(history)), history)
+# plt.xlabel('Generations')
+# plt.ylabel('Best Cost Found')
+# plt.title('Genetic Algorithm Cost Over Restarts')
+# plt.savefig('genetic_iterations')
+# plt.show()
+
+# --- HC, SA, GA HYPERPARAMETER PLOTS --- 
+
+df = pd.read_csv('hyperparameter_results.csv')
+
+# # plot 1: hill climbing num_restarts change
+# hill_climbing = df[df['algorithm'] == 'hill_climbing']
+# plt.figure()
+# plt.plot(hill_climbing['value'], hill_climbing['median_cost'], marker='o')
+# plt.xlabel('Number of Restarts')
+# plt.ylabel('Median Cost')
+# plt.title('Hill Climbing: Number of Restarts')
+# plt.savefig('hill_climbing_hyperparameter.png')
+# plt.show()
+
+# # plot 2: simulated annealing alpha change
+# simulated_annealing = df[df['algorithm'] == 'simulated_annealing']
+# plt.figure()
+# plt.plot(simulated_annealing['value'], simulated_annealing['median_cost'], marker='o')
+# plt.xlabel('Alpha')
+# plt.ylabel('Median Cost')
+# plt.title('Simulated Annealing: Change in Alpha')
+# plt.savefig('simulated_annealing_hyperparameter.png')
+# plt.show()
+
+# # plot 1: simulated annealing alpha change
+# genetic = df[df['algorithm'] == 'genetic']
+# plt.figure()
+# plt.plot(genetic['value'], genetic['median_cost'], marker='o')
+# plt.xlabel('Population Size')
+# plt.ylabel('Median Cost')
+# plt.title('Genetic: Population Size')
+# plt.savefig('genetic_hyperparameter.png')
+# plt.show()
+
+# --- COMPARE HC, SA, GA TO ASTAR --- 
