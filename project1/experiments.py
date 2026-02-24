@@ -125,7 +125,7 @@ import project1
 #         size_matrices = [f for f in matrices if f.startswith(f'matrices/{size}_')]
 
 #         for matrix_file in size_matrices:
-#             mat = np.loadtxt(matrix_file)
+#             mat = np.loadtxt(matrix_file) 
 
 #             start_time = time.time_ns()
 #             start_cpu = time.process_time_ns()
@@ -319,35 +319,21 @@ results = []
 
 for name, algorithm in algorithms:
     for size in sizes:
-        runtimes = []
-        cpu_times = []
-        costs = []
+        matrix_file = f'matrices/{size}_random_adj_mat_0.txt'
+        mat = np.loadtxt(matrix_file)
 
-        # get all 10 matrices for this size
-        size_matrices = [f for f in matrices if f.startswith(f'matrices/{size}_')]
-
-        for matrix_file in size_matrices:
-            mat = np.loadtxt(matrix_file)
-
-            start_time = time.time_ns()
-            start_cpu = time.process_time_ns()
-            tour, dist, _ = algorithm(mat)
-            end_time = time.time_ns()
-            end_cpu = time.process_time_ns()
-
-            runtime = (end_time - start_time)
-            cpu_time = (end_cpu - start_cpu)
-
-            runtimes.append(runtime)
-            cpu_times.append(cpu_time)
-            costs.append(dist)
+        start_time = time.time_ns()
+        start_cpu = time.process_time_ns()
+        tour, dist, _ = algorithm(mat)
+        end_time = time.time_ns()
+        end_cpu = time.process_time_ns()
 
         results.append({
             'algorithm': name,
             'n_cities': size,
-            'median_runtime': np.median(runtimes),
-            'median_cpu_time': np.median(cpu_times),
-            'median_cost': np.median(costs)
+            'runtime': end_time - start_time,
+            'cpu_time': end_cpu - start_cpu,
+            'cost': dist
         })
 
 with open('hc_sa_ga_compare_astar.csv', 'w', newline='') as f:
